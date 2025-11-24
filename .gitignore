@@ -5,6 +5,9 @@ venv/
 env/
 virtualenv/
 
+# Django project
+linux-tasks/django-deployment/simple-django-project/
+
 # Python
 __pycache__/
 *.py[cod]
