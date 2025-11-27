@@ -48,12 +48,15 @@ def check_prerequisites():
         print("Error: Python 3.7+ required")
         sys.exit(1)
 
-    result = subprocess.run(["mysql", "--version"],
-                            capture_output=True,
-                            text=True)
-    
-    if result.returncode != 0:
-        print("Error: MySQL required")
+    try:
+        result = subprocess.run(["mysql", "--version"],
+                                capture_output=True,
+                                text=True)
+        if result.returncode != 0:
+            print("Error: MySQL required")
+            sys.exit(1)
+    except FileNotFoundError:
+        print("Error: MySQL is not installed")
         sys.exit(1)
 
     text = result.stdout
@@ -113,6 +116,13 @@ def main():
     """Main deployment workflow"""
     version = parse_arguments()
     print(f"Deploying version: {version}")
+
+    os_type = check_os()
+    print(f"Detected OS: {os_type}")
+    
+    check_prerequisites()
+
+    print("All prerequisites checked successfully!")
 
 
 if __name__ == "__main__":
