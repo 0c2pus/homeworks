@@ -4,6 +4,9 @@ Django Application Deployment Script
 """
 import argparse
 import platform
+import sys
+import subprocess
+import re
 
 
 def parse_arguments():
@@ -41,7 +44,29 @@ def check_os():
 
 def check_prerequisites():
     """Checks for Python and MySQL"""
-    pass
+    if sys.version_info < (3, 7):
+        print("Error: Python 3.7+ required")
+        sys.exit(1)
+
+    result = subprocess.run(["mysql", "--version"],
+                            capture_output=True,
+                            text=True)
+    
+    if result.returncode != 0:
+        print("Error: MySQL required")
+        sys.exit(1)
+
+    text = result.stdout
+    version = re.search(r'(\d+\.\d+\.\d+)', text)
+    
+    if version:
+        version_str = version.group(0)
+        major_minor = '.'.join(version_str.split('.')[:2])
+        if float(major_minor) < 8.0:
+            print(f"Error: MySQL 8.0+ required, found version {major_minor}")
+            sys.exit(1)
+    else:
+        print("Error: Could not determine MySQL version")
 
 
 def create_directory():
