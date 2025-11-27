@@ -3,6 +3,7 @@
 Django Application Deployment Script
 """
 import argparse
+import platform
 
 
 def parse_arguments():
@@ -21,7 +22,21 @@ def parse_arguments():
 
 def check_os():
     """Specifies the type of operating system"""
-    pass
+    try:
+        info = platform.freedesktop_os_release()
+        distro_id = info['ID']
+        distro_like = info.get('ID_LIKE', '')
+        if distro_id in ['debian', 'ubuntu', 'rhel']:
+            return distro_id
+        else:
+            if 'rhel' in distro_like:
+                return distro_like
+            else:
+                return "unsupported"
+    except KeyError:
+        return "unsupported"
+    except:
+        return "unsupported"
 
 
 def check_prerequisites():
