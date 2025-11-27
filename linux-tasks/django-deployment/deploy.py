@@ -2,12 +2,22 @@
 """
 Django Application Deployment Script
 """
+import argparse
 
 
 def parse_arguments():
     """Parse command-line arguments"""
-    pass
-
+    parser = argparse.ArgumentParser(description='Deploy Django application')
+    
+    parser.add_argument(
+        '--version',
+        required=True,
+        help='Application version to deploy (e.g., v1.0.0, main, commit-hash)'
+    )
+    
+    args = parser.parse_args()
+    
+    return args.version
 
 def check_os():
     """Specifies the type of operating system"""
@@ -61,7 +71,8 @@ def start_server():
 
 def main():
     """Main deployment workflow"""
-    pass
+    version = parse_arguments()
+    print(f"Deploying version: {version}")
 
 
 if __name__ == "__main__":
