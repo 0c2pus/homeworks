@@ -76,7 +76,7 @@ def check_prerequisites():
     print("Prerequisites check passed (MySQL check skipped for testing)")
 
 
-def create_directory(app_dir="django-deployment"):
+def create_directory(app_dir="project-dir"):
     """Creating a working directory - for a virtual environment"""
     if os.path.exists(app_dir):
         print("Removing old deployment directory...")
@@ -87,9 +87,30 @@ def create_directory(app_dir="django-deployment"):
     return app_dir
 
 
-def create_virtualenv():
+def create_virtualenv(app_dir):
     """Creating virtualenv - an isolated Python environment"""
-    pass
+    venv_path = os.path.join(app_dir, "venv")
+    print("Creating virtual environment...")
+
+    try:
+        result = subprocess.run(["python3", "-m", "venv", venv_path],
+                       capture_output=True,
+                       text=True)
+        if result.returncode != 0:
+            print("Error: Failed to create virtual environment")
+            sys.exit(1)
+
+    except Exception:
+        print(result.stderr)
+        sys.exit(1)
+    
+    activate_script = os.path.join(venv_path, "bin", "activate")
+    if not os.path.exists(activate_script):
+        print("Error: Virtual environment was not created properly")
+        sys.exit(1)
+
+    print("Virtual environment created")
+    return venv_path
 
 
 def pull_code():
@@ -133,6 +154,8 @@ def main():
     check_prerequisites()
 
     app_dir = create_directory()
+
+    venv_path = create_virtualenv(app_dir)
 
     print("All prerequisites checked successfully!")
 
