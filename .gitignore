@@ -6,7 +6,7 @@ env/
 virtualenv/
 
 # Django project
-linux-tasks/django-deployment/simple-django-project/
+linux-tasks/django-deployment/project-dir/simple-django-project/
 
 # Python
 __pycache__/
