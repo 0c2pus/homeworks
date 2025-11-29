@@ -139,9 +139,23 @@ def pull_code(app_dir, version):
     return code_dir
 
 
-def install_dependencies():
+def install_dependencies(venv_path, code_dir):
     """Installing dependencies - pip install -r requirements.txt"""
-    pass
+    pip_path = os.path.join(venv_path, "bin", "pip")
+    requirements_path = os.path.join(code_dir, "requirements.txt")
+
+    if not os.path.exists(requirements_path):
+        print("Error: requirements.txt not found")
+        sys.exit(1)
+
+    result = subprocess.run([pip_path, "install", "-r",
+                            requirements_path],
+                            capture_output=True,
+                            text=True)
+    if result.returncode != 0:
+        print("Error: Failed to install dependencies")
+        print(result.stderr)
+        sys.exit(1)
 
 
 def db_setting():
@@ -175,10 +189,10 @@ def main():
     check_prerequisites()
 
     app_dir = create_directory()
-
     venv_path = create_virtualenv(app_dir)
-
     code_dir = pull_code(app_dir, version)
+
+    install_dependencies(venv_path, code_dir)
 
     print("All prerequisites checked successfully!")
 
