@@ -75,6 +75,17 @@ def check_prerequisites():
 
     print("Prerequisites check passed (MySQL check skipped for testing)")
 
+    try:
+        result = subprocess.run(["git", "--version"],
+                                capture_output=True,
+                                text=True)
+        if result.returncode != 0:
+            print("Error: Git command failed")
+            sys.exit(1)
+    except FileNotFoundError:
+        print("Error: Git is not installed")
+        sys.exit(1)
+
 
 def create_directory(app_dir="project-dir"):
     """Creating a working directory - for a virtual environment"""
@@ -113,9 +124,19 @@ def create_virtualenv(app_dir):
     return venv_path
 
 
-def pull_code():
+def pull_code(app_dir, version):
     """Downloading code - git clone of a specific version"""
-    pass
+    repo_url = "https://github.com/Manisha-Bayya/simple-django-project.git"
+    code_dir = os.path.join(app_dir, "simple-django-project")
+    
+    result = subprocess.run(["git", "clone", "--branch", version, repo_url, code_dir],
+                            capture_output=True,
+                            text=True)
+    if result.returncode != 0:
+        print(f"Error: Failed to clone repository (version '{version}' not found?)")
+        print(f"Git error: {result.stderr}")
+        sys.exit(1)
+    return code_dir
 
 
 def install_dependencies():
@@ -156,6 +177,8 @@ def main():
     app_dir = create_directory()
 
     venv_path = create_virtualenv(app_dir)
+
+    code_dir = pull_code(app_dir, version)
 
     print("All prerequisites checked successfully!")
 
