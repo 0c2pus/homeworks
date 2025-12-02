@@ -1,6 +1,23 @@
 #!/usr/bin/env python3
 """
 Django Application Deployment Script
+
+This script automates the deployment of a Django application by:
+- Checking system prerequisites (Python 3.7+, MySQL 8.0+, Git)
+- Creating a virtual environment
+- Cloning the application repository
+- Installing dependencies
+- Setting up the database
+- Configuring the application
+- Running migrations
+- Starting the development server
+
+Usage:
+    python3 deploy.py --version <version>
+
+Example:
+    python3 deploy.py --version master
+    python3 deploy.py --version v1.0.0
 """
 import argparse
 import platform
@@ -51,28 +68,28 @@ def check_prerequisites():
         print("Error: Python 3.7+ required")
         sys.exit(1)
 
-    # try:
-    #     result = subprocess.run(["mysql", "--version"],
-    #                             capture_output=True,
-    #                             text=True)
-    #     if result.returncode != 0:
-    #         print("Error: MySQL required")
-    #         sys.exit(1)
-    # except FileNotFoundError:
-    #     print("Error: MySQL is not installed")
-    #     sys.exit(1)
+    try:
+        result = subprocess.run(["mysql", "--version"],
+                                capture_output=True,
+                                text=True)
+        if result.returncode != 0:
+            print("Error: MySQL required")
+            sys.exit(1)
+    except FileNotFoundError:
+        print("Error: MySQL is not installed")
+        sys.exit(1)
 
-    # text = result.stdout
-    # version = re.search(r'(\d+\.\d+\.\d+)', text)
+    text = result.stdout
+    version = re.search(r'(\d+\.\d+\.\d+)', text)
     
-    # if version:
-    #     version_str = version.group(0)
-    #     major_minor = '.'.join(version_str.split('.')[:2])
-    #     if float(major_minor) < 8.0:
-    #         print(f"Error: MySQL 8.0+ required, found version {major_minor}")
-    #         sys.exit(1)
-    # else:
-    #     print("Error: Could not determine MySQL version")
+    if version:
+        version_str = version.group(0)
+        major_minor = '.'.join(version_str.split('.')[:2])
+        if float(major_minor) < 8.0:
+            print(f"Error: MySQL 8.0+ required, found version {major_minor}")
+            sys.exit(1)
+    else:
+        print("Error: Could not determine MySQL version")
 
     print("Prerequisites check passed (MySQL check skipped for testing)")
 
@@ -264,9 +281,16 @@ def run_migrations(venv_path, code_dir):
     print("Migrations completed successfully!")
 
 
-def start_server():
+def start_server(venv_path, code_dir):
     """The Runserver - manage.py Runserver"""
-    pass
+    python_path = os.path.join(venv_path, "bin", "python3")
+    manage_path = os.path.join(code_dir, "manage.py")
+
+    print("Starting Django server on port 8001...")
+    print("Press Ctrl+C to stop the server")
+    print("-" * 50)
+
+    subprocess.run([python_path, manage_path, "runserver", "0:8001"])
 
 
 def main():
@@ -283,13 +307,15 @@ def main():
     venv_path = create_virtualenv(app_dir)
     code_dir = pull_code(app_dir, version)
 
-    # install_dependencies(venv_path, code_dir)
+    install_dependencies(venv_path, code_dir)
     
     db_user, db_password = db_setting(code_dir)
 
     application_configuration(code_dir, db_user, db_password)
 
     run_migrations(venv_path, code_dir)
+
+    start_server(venv_path, code_dir)
 
     print("All prerequisites checked successfully!")
 
