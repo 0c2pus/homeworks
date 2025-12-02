@@ -223,9 +223,45 @@ def application_configuration(code_dir, db_user, db_password):
     print("Application configuration updated successfully!")
 
 
-def run_migrations():
+def run_migrations(venv_path, code_dir):
     """Starting migrations - manage.py migrate"""
-    pass
+    python_path = os.path.join(venv_path, "bin", "python3")
+
+    if not os.path.exists(python_path):
+        print("Error: python not found")
+        sys.exit(1)
+
+    manage_path = os.path.join(code_dir, "manage.py")
+
+    if not os.path.exists(manage_path):
+            print("Error: manage.py not found")
+            sys.exit(1)
+
+    result = subprocess.run([python_path, manage_path, "makemigrations"],
+                       capture_output=True,
+                       text=True)
+    if result.returncode != 0:
+        print("Error: makemigrations failed")
+        print(result.stderr)
+        sys.exit(1)
+
+    result = subprocess.run([python_path, manage_path, "migrate"],
+                            capture_output=True,
+                            text=True)
+    if result.returncode != 0:
+        print("Error: migrate failed")
+        print(result.stderr)
+        sys.exit(1)
+
+    result = subprocess.run([python_path, manage_path, "rebuild_index"],
+                   capture_output=True,
+                   text=True)
+    if result.returncode != 0:
+        print("Warning: rebuild_index failed (non-critical)")
+    else:
+        print("Search index rebuilt successfully")
+
+    print("Migrations completed successfully!")
 
 
 def start_server():
@@ -252,6 +288,8 @@ def main():
     db_user, db_password = db_setting(code_dir)
 
     application_configuration(code_dir, db_user, db_password)
+
+    run_migrations(venv_path, code_dir)
 
     print("All prerequisites checked successfully!")
 
