@@ -9,6 +9,7 @@ import subprocess
 import re
 import os
 import shutil
+import getpass
 
 
 def parse_arguments():
@@ -158,9 +159,40 @@ def install_dependencies(venv_path, code_dir):
         sys.exit(1)
 
 
-def db_setting():
+def db_setting(code_dir):
     """Database Setup - Import world.sql into MySQL"""
-    pass
+    print("=== DB SETTING FUNCTION CALLED ===")
+    print("Setting up database...")
+    
+    db_user = input("Enter MySQL username (default: root): ") or "root"
+    db_password = getpass.getpass("Enter MySQL password: ")
+    db_name = input("Enter database name (default: world): ") or "world"
+    
+    sql_file = os.path.join(code_dir, "world.sql")
+    
+    if not os.path.exists(sql_file):
+        print("Error: world.sql not found")
+        sys.exit(1)
+    
+    try:
+        result = subprocess.run([
+        "mysql",
+        f"-u{db_user}",
+        f"-p{db_password}",
+        db_name
+        ], stdin=open(sql_file),
+        capture_output=True,
+        text=True)
+
+        if result.returncode != 0:
+            print("Error: Failed to import database")
+            print(result.stderr)
+            sys.exit(1)
+
+        print("Database imported successfully!")
+    except FileNotFoundError:
+        print("Warning: MySQL not installed, skipping database import")
+        print("On production, this would run: mysql -u{user} -p {db} < world.sql")
 
 
 def application_configuration():
@@ -192,7 +224,9 @@ def main():
     venv_path = create_virtualenv(app_dir)
     code_dir = pull_code(app_dir, version)
 
-    install_dependencies(venv_path, code_dir)
+    # install_dependencies(venv_path, code_dir)
+    
+    db_setting(code_dir)
 
     print("All prerequisites checked successfully!")
 
