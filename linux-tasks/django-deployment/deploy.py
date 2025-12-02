@@ -194,10 +194,33 @@ def db_setting(code_dir):
         print("Warning: MySQL not installed, skipping database import")
         print("On production, this would run: mysql -u{user} -p {db} < world.sql")
 
+    return db_user, db_password
 
-def application_configuration():
+
+def application_configuration(code_dir, db_user, db_password):
     """Application Configuration - settings.py Editing"""
-    pass
+    settings_path = os.path.join(code_dir, "panorbit", "settings.py")
+    db_host = "localhost"
+    db_port = "3306"
+
+    if not os.path.exists(settings_path):
+        print("Error: settings.py not found")
+        sys.exit(1)
+
+    try:
+        with open(settings_path, 'r') as file:
+            data = file.read()
+    except Exception as e:
+        print(f"Error reading settings.py: {e}")
+        sys.exit(1)
+
+    data = data.replace('<mysql-user>', db_user)
+    data = data.replace('<mysql-password>', db_password)
+    data = data.replace('<mysql-host>', db_host)
+    data = data.replace('<mysql-port>', db_port)
+    with open(settings_path, 'w') as file:
+        file.write(data)
+    print("Application configuration updated successfully!")
 
 
 def run_migrations():
@@ -226,7 +249,9 @@ def main():
 
     # install_dependencies(venv_path, code_dir)
     
-    db_setting(code_dir)
+    db_user, db_password = db_setting(code_dir)
+
+    application_configuration(code_dir, db_user, db_password)
 
     print("All prerequisites checked successfully!")
 
