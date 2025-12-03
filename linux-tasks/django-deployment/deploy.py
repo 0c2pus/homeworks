@@ -32,16 +32,17 @@ import getpass
 def parse_arguments():
     """Parse command-line arguments"""
     parser = argparse.ArgumentParser(description='Deploy Django application')
-    
+
     parser.add_argument(
         '--version',
         required=True,
         help='Application version to deploy (e.g., v1.0.0, main, commit-hash)'
     )
-    
+
     args = parser.parse_args()
-    
+
     return args.version
+
 
 def check_os():
     """Specifies the type of operating system"""
@@ -58,7 +59,7 @@ def check_os():
                 return "unsupported"
     except KeyError:
         return "unsupported"
-    except:
+    except BaseException:
         return "unsupported"
 
 
@@ -81,7 +82,7 @@ def check_prerequisites():
 
     text = result.stdout
     version = re.search(r'(\d+\.\d+\.\d+)', text)
-    
+
     if version:
         version_str = version.group(0)
         major_minor = '.'.join(version_str.split('.')[:2])
@@ -123,8 +124,8 @@ def create_virtualenv(app_dir):
 
     try:
         result = subprocess.run(["python3", "-m", "venv", venv_path],
-                       capture_output=True,
-                       text=True)
+                                capture_output=True,
+                                text=True)
         if result.returncode != 0:
             print("Error: Failed to create virtual environment")
             sys.exit(1)
@@ -132,7 +133,7 @@ def create_virtualenv(app_dir):
     except Exception:
         print(result.stderr)
         sys.exit(1)
-    
+
     activate_script = os.path.join(venv_path, "bin", "activate")
     if not os.path.exists(activate_script):
         print("Error: Virtual environment was not created properly")
@@ -146,12 +147,18 @@ def pull_code(app_dir, version):
     """Downloading code - git clone of a specific version"""
     repo_url = "https://github.com/Manisha-Bayya/simple-django-project.git"
     code_dir = os.path.join(app_dir, "simple-django-project")
-    
-    result = subprocess.run(["git", "clone", "--branch", version, repo_url, code_dir],
+
+    result = subprocess.run(["git",
+                             "clone",
+                             "--branch",
+                             version,
+                             repo_url,
+                             code_dir],
                             capture_output=True,
                             text=True)
     if result.returncode != 0:
-        print(f"Error: Failed to clone repository (version '{version}' not found?)")
+        print(
+            f"Error: Failed to clone repository (version '{version}' not found?)")
         print(f"Git error: {result.stderr}")
         sys.exit(1)
     return code_dir
@@ -180,26 +187,26 @@ def db_setting(code_dir):
     """Database Setup - Import world.sql into MySQL"""
     print("=== DB SETTING FUNCTION CALLED ===")
     print("Setting up database...")
-    
+
     db_user = input("Enter MySQL username (default: root): ") or "root"
     db_password = getpass.getpass("Enter MySQL password: ")
     db_name = input("Enter database name (default: world): ") or "world"
-    
+
     sql_file = os.path.join(code_dir, "world.sql")
-    
+
     if not os.path.exists(sql_file):
         print("Error: world.sql not found")
         sys.exit(1)
-    
+
     try:
         result = subprocess.run([
-        "mysql",
-        f"-u{db_user}",
-        f"-p{db_password}",
-        db_name
+            "mysql",
+            f"-u{db_user}",
+            f"-p{db_password}",
+            db_name
         ], stdin=open(sql_file),
-        capture_output=True,
-        text=True)
+            capture_output=True,
+            text=True)
 
         if result.returncode != 0:
             print("Error: Failed to import database")
@@ -209,7 +216,8 @@ def db_setting(code_dir):
         print("Database imported successfully!")
     except FileNotFoundError:
         print("Warning: MySQL not installed, skipping database import")
-        print("On production, this would run: mysql -u{user} -p {db} < world.sql")
+        print(
+            "On production, this would run: mysql -u{user} -p {db} < world.sql")
 
     return db_user, db_password
 
@@ -251,12 +259,12 @@ def run_migrations(venv_path, code_dir):
     manage_path = os.path.join(code_dir, "manage.py")
 
     if not os.path.exists(manage_path):
-            print("Error: manage.py not found")
-            sys.exit(1)
+        print("Error: manage.py not found")
+        sys.exit(1)
 
     result = subprocess.run([python_path, manage_path, "makemigrations"],
-                       capture_output=True,
-                       text=True)
+                            capture_output=True,
+                            text=True)
     if result.returncode != 0:
         print("Error: makemigrations failed")
         print(result.stderr)
@@ -271,8 +279,8 @@ def run_migrations(venv_path, code_dir):
         sys.exit(1)
 
     result = subprocess.run([python_path, manage_path, "rebuild_index"],
-                   capture_output=True,
-                   text=True)
+                            capture_output=True,
+                            text=True)
     if result.returncode != 0:
         print("Warning: rebuild_index failed (non-critical)")
     else:
@@ -300,7 +308,7 @@ def main():
 
     os_type = check_os()
     print(f"Detected OS: {os_type}")
-    
+
     check_prerequisites()
 
     app_dir = create_directory()
@@ -308,7 +316,7 @@ def main():
     code_dir = pull_code(app_dir, version)
 
     install_dependencies(venv_path, code_dir)
-    
+
     db_user, db_password = db_setting(code_dir)
 
     application_configuration(code_dir, db_user, db_password)
